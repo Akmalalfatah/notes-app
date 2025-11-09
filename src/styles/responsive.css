@@ -1,0 +1,28 @@
+#card-list-loading-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--spacing-lg, 24px);
+}
+
+.skeleton-item {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--background-light, #f8f9fa); 
+    border-radius: var(--border-radius-md, 8px);
+    overflow: hidden;
+    height: 380px; 
+    box-shadow: var(--shadow-default, 0 4px 6px rgba(0, 0, 0, 0.05));
+    animation: pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 0.6;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0.6;
+    }
+}
