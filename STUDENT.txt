@@ -1,2 +1,2 @@
-APP_URL=https://github.com/Akmalalfatah/bukukami
+APP_URL=https://github.com/Akmalalfatah/notes-app
 MAP_SERVICE_API_KEY=<api_key>
