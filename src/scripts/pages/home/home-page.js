@@ -1,8 +1,8 @@
-import { generateLoaderTemplate, generateHeroTemplate, generateSkeletonTemplate, generateCardItemTemplate } from "../../templates";
+import { generateHeroTemplate, generateSkeletonTemplate, generateCardItemTemplate } from "../../templates";
 import HomePresenter from "./home-presenter";
 import * as StoryAPI from "../../data/api";
 import Map from "../../utils/map";
-
+import { saveStories, getAllStories } from "../../utils/db-helper";
 
 export default class HomePage {
     #presenter = null;
@@ -15,9 +15,9 @@ export default class HomePage {
                 <div class="hero-section">${generateHeroTemplate()}</div>
 
                 <h2 class="section-title">Lokasi dari para authors</h2>
-                    <div class="map-container" style="height: 400px; margin-top: 40px;">
-                        <div id="map" style="width: 100%; height: 100%;"></div>
-                    </div>
+                <div class="map-container" style="height: 400px; margin-top: 40px;">
+                    <div id="map" style="width: 100%; height: 100%;"></div>
+                </div>
                 
                 <section class="container">
                     <h2 class="section-title">Kisah Terbaru</h2>
@@ -30,8 +30,6 @@ export default class HomePage {
                             <button id="load-more-button" class="btn" style="display: none;">Muat Lebih Banyak</button>
                         </div>
                     </div>
-                    
-                    
                 </section>
             </div>
         `;
@@ -42,9 +40,32 @@ export default class HomePage {
             view: this,
             model: StoryAPI,
         });
+
         this.#map = null;
-        await this.#presenter.fetchStories();
+        await this.#fetchStories();
         this.#setupLoadMoreButton();
+    }
+
+    async #fetchStories() {
+        try {
+            const token = getAccessToken();
+
+            const response = await fetch('https://story-api.dicoding.dev/v1/stories', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            if (!response.ok) throw new Error('Gagal fetch data');
+            const { listStory } = await response.json();
+
+            await saveStories(listStory);
+            this.displayStories(listStory);
+        } catch (err) {
+            console.warn('Ambil dari IndexedDB (offline mode)');
+            const cachedStories = await getAllStories();
+            this.displayStories(cachedStories);
+        }
     }
 
     #setupLoadMoreButton() {
@@ -56,11 +77,8 @@ export default class HomePage {
         this.#loadMoreButtonListener = async () => {
             await this.#presenter.loadNextStories();
         };
-
         loadMoreButton.addEventListener('click', this.#loadMoreButtonListener);
     }
-
-    
 
     displayStories(stories = []) {
         const loadingContainer = document.getElementById('card-list-loading-container');
@@ -102,18 +120,11 @@ export default class HomePage {
 
     showLoadMoreButton(show, loading = false) {
         const button = document.getElementById('load-more-button');
-
         if (!button) return;
 
         button.style.display = show ? 'block' : 'none';
-
-        if (loading) {
-            button.disabled = true;
-            button.textContent = 'Memuat...';
-        } else {
-            button.disabled = false;
-            button.textContent = 'Muat Lebih Banyak';
-        }
+        button.disabled = loading;
+        button.textContent = loading ? 'Memuat' : 'Muat Lebih Banyak';
     }
 
     showLoading() {
@@ -144,9 +155,8 @@ export default class HomePage {
     }
 
     #initializeMap(stories) {
-
         if (typeof Map === 'undefined' || typeof Map.build !== 'function') {
-            console.warn('Map library not available');
+            console.warn('Map library tidak tersedia');
             const mapEl = document.getElementById('map');
             if (mapEl) {
                 mapEl.innerHTML = '<p style="text-align:center; color:#999;">Map library belum tersedia.</p>';
@@ -157,10 +167,10 @@ export default class HomePage {
         const avgLat = stories.reduce((sum, s) => sum + s.lat, 0) / stories.length;
         const avgLon = stories.reduce((sum, s) => sum + s.lon, 0) / stories.length;
 
-        Map.build('#map', { 
+        Map.build('#map', {
             center: [avgLat, avgLon],
-            zoom: 5, 
-            locate: false  
+            zoom: 5,
+            locate: false
         })
             .then(map => {
                 this.#map = map;
@@ -177,14 +187,12 @@ export default class HomePage {
 
     #rebuildMapMarkers(stories) {
         if (!this.#map) return;
-
         const leafletMap = this.#map.getLeafletMap();
         leafletMap.eachLayer((layer) => {
             if (layer instanceof L.Marker) {
                 leafletMap.removeLayer(layer);
             }
         });
-
         this.#addMarkersToMap(stories);
     }
 
@@ -192,16 +200,14 @@ export default class HomePage {
         if (!this.#map || !stories || stories.length === 0) return;
 
         const bounds = [];
-
         stories.forEach(story => {
             if (story.lat && story.lon) {
                 try {
-
                     const marker = this.#map.addMarker(
-                        [story.lat, story.lon], 
-                        { 
+                        [story.lat, story.lon],
+                        {
                             title: story.name || story.description || 'Story',
-                            draggable: false 
+                            draggable: false
                         }
                     );
                     if (marker && typeof marker.bindPopup === 'function') {
@@ -213,13 +219,11 @@ export default class HomePage {
                         `;
                         marker.bindPopup(popupContent);
                     }
-
                     if (marker && typeof marker.on === 'function') {
                         marker.on('click', () => {
                             location.hash = `#/stories/${story.id}`;
                         });
                     }
-
                     bounds.push([story.lat, story.lon]);
                 } catch (error) {
                     console.error('Error creating marker:', error);
@@ -230,9 +234,7 @@ export default class HomePage {
         if (bounds.length > 0) {
             try {
                 const leafletMap = this.#map.getLeafletMap();
-                if (leafletMap && typeof leafletMap.fitBounds === 'function') {
-                    leafletMap.fitBounds(bounds, { padding: [50, 50] });
-                }
+                leafletMap.fitBounds(bounds, { padding: [50, 50] });
             } catch (error) {
                 console.error('Error fitting bounds:', error);
             }

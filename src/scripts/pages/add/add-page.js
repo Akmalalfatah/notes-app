@@ -4,6 +4,7 @@ import * as StoryAPI from '../../data/api';
 import Camera from '../../utils/camera';
 import Map from '../../utils/map';
 import { generateLoaderTemplate } from '../../templates';
+import { savePendingStory } from '../../utils/db-helper';
 
 export default class AddPage {
   #presenter;
@@ -145,7 +146,6 @@ export default class AddPage {
       const center = this.#map.getCenter();
       this.#updateLatLngInput(center.lat, center.lng);
 
-      // Ambil marker awal jika ada
       let marker = this.#map.getSingleMarker();
 
       if (marker) {
@@ -155,13 +155,11 @@ export default class AddPage {
         });
       }
 
-      // Event klik peta sesuai wrapper
       this.#map.addMapEventListener('click', (e) => {
-        const latlng = e.latlng || e; // pastikan dapat koordinat
+        const latlng = e.latlng || e;
         marker = this.#map.getSingleMarker();
 
         if (!marker) {
-          // buat marker baru melalui wrapper
           marker = this.#map.createMarker(latlng, { draggable: true });
 
           marker.on('dragend', (ev) => {
@@ -191,8 +189,6 @@ export default class AddPage {
 
     this.#setupCamera();
   }
-
-
 
   #updateLatLngInput(latitude, longitude) {
     document.getElementById('latitude-input').value = latitude;
@@ -230,7 +226,12 @@ export default class AddPage {
         lon: lon === '' ? null : lon,
       };
 
-      await this.#presenter.storeStory(data);
+      try {
+        await this.#presenter.storeStory(storyData);
+      } catch (err) {
+        await savePendingStory(storyData);
+        alert('Kamu sedang offline. Cerita akan dikirim otomatis saat online.');
+      }
     });
 
     document.getElementById('documentations-input').addEventListener('change', async (event) => {
@@ -342,5 +343,25 @@ export default class AddPage {
     this.#form.reset();
     this.#takenDocumentations = [];
     document.getElementById('documentation-output').innerHTML = '';
+  }
+}
+
+async function handleSubmitStory(storyData) {
+  try {
+    const token = getAccessToken();
+    const response = await fetch('https://story-api.dicoding.dev/v1/stories', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(storyData),
+    });
+
+    if (!response.ok) throw new Error('Gagal kirim ke server');
+    alert('Story berhasil dikirim!');
+  } catch (err) {
+    console.warn('Menyimpan story ke IndexedDB pending');
+    await savePendingStory(storyData);
+    alert('Kamu sedang offline. Story akan dikirim otomatis saat online.');
   }
 }

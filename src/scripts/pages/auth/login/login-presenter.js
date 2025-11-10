@@ -24,7 +24,7 @@ export default class LoginPresenter {
             }
             putAccessToken(token);
             location.hash = '/';
-            this.#view.loginSuccessfully('Login berhasil! Mengalihkan...', { token });
+            this.#view.loginSuccessfully('Login berhasil!', { token });
         } catch (error) {
             console.error('getLogin: error:', error);
             this.#view.loginFailed(error.message);

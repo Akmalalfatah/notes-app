@@ -3,6 +3,7 @@ import { setupSkipToContent, transitionHelper } from '../utils';
 import { getActiveRoute } from '../routes/url-parser';
 import { getAccessToken, getLogout } from '../utils/auth';
 import { generateUnauthenticatedNavigationListTemplate, generateAuthenticatedNavigationListTemplate } from '../templates';
+import * as NotificationHelper from '../utils/notification-helper.js';
 
 class App {
   #content;
@@ -85,21 +86,25 @@ class App {
 
     const pushNotifButton = document.getElementById('push-notification-button');
     if (pushNotifButton) {
-      pushNotifButton.addEventListener('click', async () => {
+      pushNotifButton.addEventListener('click', async (e) => {
+        e.preventDefault();
         try {
-          const permission = await Notification.requestPermission();
-          if (permission === 'granted') {
-            new Notification('Notifikasi diaktifkan!', {
-              body: 'Kamu akan menerima pemberitahuan dari aplikasi ini.',
-            });
+          const { subscribed } = await NotificationHelper.toggleSubscription();
+          if (subscribed) {
+            alert('Notification berhasil di subscribe');
+            pushNotifButton.textContent = 'Unsubscribe';
+            pushNotifButton.setAttribute('aria-pressed', 'true');
           } else {
-            alert('Notifikasi tidak diaktifkan.');
+            alert('Anda berhenti berlangganan');
+            pushNotifButton.textContent = 'Subscribe';
+            pushNotifButton.setAttribute('aria-pressed', 'false');
           }
         } catch (error) {
-          console.error('Push notification error:', error);
-          alert('Browser kamu tidak mendukung notifikasi.');
+          console.error('Toggle subscription error:', error);
+          alert('Terjadi kesalahan saat mengubah status langganan');
         }
       });
+
     }
 
     const logoutButton = document.getElementById('logout-button');

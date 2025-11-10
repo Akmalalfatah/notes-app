@@ -55,7 +55,7 @@ export async function storeNewStory({ description, photo }) {
   const token = getAccessToken();
 
   if (!token) {
-      throw new Error("Akses ditolak. Anda harus login untuk mengunggah cerita.");
+      throw new Error("Akses ditolak. Anda harus login");
   }
 
   const formData = new FormData();
@@ -75,4 +75,36 @@ export async function storeNewStory({ description, photo }) {
     ...json,
     ok: fetchResponse.ok,
   };
+}
+
+export async function subscribePushNotification(subscription) {
+  if (!subscription) {
+    console.error('Subscription kosong!');
+    return;
+  }
+
+  const subJson = subscription.toJSON ? subscription.toJSON() : {};
+  const keys = subJson.keys || {};
+
+  const payload = {
+    endpoint: subJson.endpoint || subscription.endpoint,
+    keys: {
+      p256dh: keys.p256dh || null,
+      auth: keys.auth || null,
+    },
+  };
+
+  console.log('Payload dikirim ke server:', payload);
+
+  return fetch('/api/push/subscribe', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+}
+
+ 
+export async function unsubscribePushNotification({ endpoint }) {
+  console.log('unsubscribePushNotification called', endpoint);
+  return { ok: true, message: 'no-op' };
 }

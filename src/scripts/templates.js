@@ -54,7 +54,7 @@ export function generateCardItemTemplate({
 
 export function generateUnauthenticatedNavigationListTemplate() {
   return `
-    <li><a id="push-notification-button" class="btn push-notification-button">Aktifkan Notifikasi</a></li>
+    <li><a id="push-notification-button" class="btn push-notification-button"><i class="fa-solid fa-bell"></i> Subscribe</a></li>
     <li><a id="login-button" class="btn login-button" href="#/login">Login</a></li>
     <li><a id="register-button" class="btn register-button" href="#/register">Register</a></li>
   `;
@@ -62,8 +62,8 @@ export function generateUnauthenticatedNavigationListTemplate() {
 
 export function generateAuthenticatedNavigationListTemplate() {
   return `
-    <li><a id="push-notification-button" class="btn push-notification-button">Aktifkan Notifikasi</a></li>
-    <li><a id="new-report-button" class="btn new-report-button" href="#/add">Buat Laporan</a></li>
-    <li><a id="logout-button" class="logout-button" href="#/logout">Logout</a></li>
+    <li><a id="push-notification-button" class="btn push-notification-button"><i class="fa-solid fa-bell"></i> Subscribe</a></li>
+    <li><a id="new-report-button" class="btn new-report-button" href="#/add"><i class="fa-solid fa-plus"></i> Buat Laporan</a></li>
+    <li><a id="logout-button" class="logout-button" href="#/logout"><i class="fa-solid fa-door-open"></i> Logout</a></li>
   `;
 }
