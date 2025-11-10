@@ -5,6 +5,7 @@ import Camera from '../../utils/camera';
 import Map from '../../utils/map';
 import { generateLoaderTemplate } from '../../templates';
 import { savePendingStory } from '../../utils/db-helper';
+import { getAccessToken } from '../../utils/auth'; 
 
 export default class AddPage {
   #presenter;
@@ -226,10 +227,12 @@ export default class AddPage {
         lon: lon === '' ? null : lon,
       };
 
+      // FIX: Gunakan variable 'data' bukan 'storyData'
       try {
-        await this.#presenter.storeStory(storyData);
+        await this.#presenter.storeStory(data);
       } catch (err) {
-        await savePendingStory(storyData);
+        console.error('Error storing story:', err);
+        await savePendingStory(data);
         alert('Kamu sedang offline. Cerita akan dikirim otomatis saat online.');
       }
     });
@@ -343,25 +346,5 @@ export default class AddPage {
     this.#form.reset();
     this.#takenDocumentations = [];
     document.getElementById('documentation-output').innerHTML = '';
-  }
-}
-
-async function handleSubmitStory(storyData) {
-  try {
-    const token = getAccessToken();
-    const response = await fetch('https://story-api.dicoding.dev/v1/stories', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify(storyData),
-    });
-
-    if (!response.ok) throw new Error('Gagal kirim ke server');
-    alert('Story berhasil dikirim!');
-  } catch (err) {
-    console.warn('Menyimpan story ke IndexedDB pending');
-    await savePendingStory(storyData);
-    alert('Kamu sedang offline. Story akan dikirim otomatis saat online.');
   }
 }

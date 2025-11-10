@@ -3,6 +3,7 @@ import HomePresenter from "./home-presenter";
 import * as StoryAPI from "../../data/api";
 import Map from "../../utils/map";
 import { saveStories, getAllStories } from "../../utils/db-helper";
+import { getAccessToken } from "../../utils/auth"; 
 
 export default class HomePage {
     #presenter = null;
@@ -47,8 +48,18 @@ export default class HomePage {
     }
 
     async #fetchStories() {
+        this.showLoading();
+        
         try {
             const token = getAccessToken();
+            
+            if (!token) {
+                console.warn('No token, using cache');
+                const cachedStories = await getAllStories();
+                this.displayStories(cachedStories);
+                this.hideLoading();
+                return;
+            }
 
             const response = await fetch('https://story-api.dicoding.dev/v1/stories', {
                 headers: {
@@ -56,15 +67,27 @@ export default class HomePage {
                 },
             });
 
-            if (!response.ok) throw new Error('Gagal fetch data');
-            const { listStory } = await response.json();
-
-            await saveStories(listStory);
-            this.displayStories(listStory);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const result = await response.json();
+            console.log('API Response:', result); 
+            
+            const stories = result.listStory || [];
+            await saveStories(stories);
+            this.displayStories(stories);
+            this.hideLoading();
         } catch (err) {
+            console.error('Fetch error:', err);
             console.warn('Ambil dari IndexedDB (offline mode)');
             const cachedStories = await getAllStories();
             this.displayStories(cachedStories);
+            this.hideLoading();
+            
+            if (cachedStories.length === 0) {
+                this.displayError('Tidak dapat memuat cerita. Periksa koneksi internet Anda.');
+            }
         }
     }
 
