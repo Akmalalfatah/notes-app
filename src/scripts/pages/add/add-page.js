@@ -5,7 +5,6 @@ import Camera from '../../utils/camera';
 import Map from '../../utils/map';
 import { generateLoaderTemplate } from '../../templates';
 import { savePendingStory } from '../../utils/db-helper';
-import { getAccessToken } from '../../utils/auth'; 
 
 export default class AddPage {
   #presenter;
@@ -227,7 +226,6 @@ export default class AddPage {
         lon: lon === '' ? null : lon,
       };
 
-      // FIX: Gunakan variable 'data' bukan 'storyData'
       try {
         await this.#presenter.storeStory(data);
       } catch (err) {

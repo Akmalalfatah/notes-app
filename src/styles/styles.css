@@ -160,26 +160,26 @@ header {
 }
 
 .card-item {
+  position: relative;
   display: flex;
   flex-direction: column;
   background-color: #ffffff;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); 
-  transition: opacity 0.3s; 
-  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: opacity 0.3s;
   height: 100%;
-}
-
-.card-item:hover, .card-item:focus {
-  opacity: 0.9; 
-  outline: none;
 }
 
 .card-item__image {
   width: 100%;
-  height: 200px; 
-  object-fit: cover; 
+  height: 220px;
+  object-fit: cover;
+  display: block;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
+  border-bottom-left-radius: 12px;
 }
 
 .card-item__body {
@@ -188,6 +188,30 @@ header {
   flex-direction: column;
   flex-grow: 1; 
   justify-content: space-between;
+}
+
+.bookmark-button {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 100px;
+  height: 40px;
+  border: none;
+  border-radius: 10px;
+  background-color: #007bff;
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bookmark-button:hover {
+  background-color: #3291f7;
+  transform: scale(1);
 }
 
 .card-item__main {

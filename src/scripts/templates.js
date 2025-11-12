@@ -30,13 +30,16 @@ export function generateCardItemTemplate({
     id, name, description, photoUrl, createdAt, lat, lon
 }) {
     const formattedDate = showFormattedDate(createdAt);
-    const locationString = (lat !== null && lon !== null) 
-        ? `(Lat: ${lat.toFixed(5)}, Lon: ${lon.toFixed(5)})` 
-        : '';
+    const locationString =
+        (typeof lat === 'number' && typeof lon === 'number')
+            ? `(Lat: ${lat.toFixed(5)}, Lon: ${lon.toFixed(5)})`
+            : '';
 
     return `
         <div tabindex="0" class="card-item" data-item="${id}">
+            <button class="bookmark-button" data-id="${id}">Bookmark</button>
             <img class="card-item__image" src="${photoUrl}" alt="Ilustrasi cerita ${name}">
+            
             <div class="card-item__body">
                 <div class="card-item__main">
                     <h2 class="card-item__title">${name}</h2>
@@ -53,7 +56,7 @@ export function generateCardItemTemplate({
 
 
 export function generateUnauthenticatedNavigationListTemplate() {
-  return `
+    return `
     <li><a id="push-notification-button" class="btn push-notification-button"><i class="fa-solid fa-bell"></i> Subscribe</a></li>
     <li><a id="login-button" class="btn login-button" href="#/login">Login</a></li>
     <li><a id="register-button" class="btn register-button" href="#/register">Register</a></li>
@@ -61,7 +64,8 @@ export function generateUnauthenticatedNavigationListTemplate() {
 }
 
 export function generateAuthenticatedNavigationListTemplate() {
-  return `
+    return `
+    <li><a id="bookmark-page-button" class="btn bookmark-page-button" href="#/bookmark"><i class="fa-solid fa-bookmark"></i> Bookmark</a></li>
     <li><a id="push-notification-button" class="btn push-notification-button"><i class="fa-solid fa-bell"></i> Subscribe</a></li>
     <li><a id="new-report-button" class="btn new-report-button" href="#/add"><i class="fa-solid fa-plus"></i> Buat Laporan</a></li>
     <li><a id="logout-button" class="logout-button" href="#/logout"><i class="fa-solid fa-door-open"></i> Logout</a></li>

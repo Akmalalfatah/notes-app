@@ -1,6 +1,6 @@
 import { convertBase64ToUint8Array } from './index';
 import { VAPID_PUBLIC_KEY } from '../config';
-import { subscribePushNotification } from '../data/api';
+import { subscribePushNotification, unsubscribePushNotification } from '../data/api';
 import { saveSubscription, deleteSubscription } from './db-helper';
 
 console.log('NotificationHelper loaded');
@@ -40,36 +40,49 @@ export async function isSubscribed() {
 }
 
 export async function subscribe() {
-    console.log('Memulai proses subscribe');
-    const granted = await requestNotificationPermission();
-    console.log('Permission granted?', granted);
+    try {
+        const granted = await requestNotificationPermission();
+        if (!granted) return;
 
-    if (!granted) return;
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: convertBase64ToUint8Array(VAPID_PUBLIC_KEY),
+        });
 
-    const registration = await navigator.serviceWorker.ready;
-    console.log('SW ready:', registration);
+        const subscriptionJSON = subscription.toJSON();
 
-    const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: convertBase64ToUint8Array(VAPID_PUBLIC_KEY),
-    });
-    console.log('Subscription berhasil:', subscription);
+        // Save to IndexedDB
+        try {
+            await saveSubscription(subscriptionJSON);
+        } catch (dbError) {
+            console.warn('Gagal save ke IndexedDB:', dbError);
+        }
 
-    await saveSubscription(subscription.toJSON());
-    localStorage.setItem('isSubscribed', 'true');
+        // Send to server
+        await subscribePushNotification(subscriptionJSON);
 
-    const worker = registration.active || registration.waiting || registration.installing;
-    worker?.postMessage({
-        type: 'SHOW_NOTIFICATION',
-        title: 'Notifikasi diaktifkan!',
-        body: 'Anda saat ini mulai berlangganan notifikasi.',
-    });
+        // Save to localStorage
+        localStorage.setItem('isSubscribed', 'true');
 
-    console.log('Pesan dikirim ke SW');
-    alert('Anda saat ini mulai berlangganan notifikasi');
-    startPeriodicNotifications(60 * 1000);
+        // Send notification to Service Worker
+        const worker = registration.active || registration.waiting || registration.installing;
+        worker?.postMessage({
+            type: 'SHOW_NOTIFICATION',
+            title: 'Notifikasi diaktifkan!',
+            body: 'Anda saat ini mulai berlangganan notifikasi.',
+        });
+
+        alert('Anda saat ini mulai berlangganan notifikasi');
+        startPeriodicNotifications(60 * 1000);
+        
+        console.log('Subscribe berhasil');
+
+    } catch (error) {
+        console.error('Subscribe gagal:', error);
+        alert('Gagal berlangganan: ' + error.message);
+    }
 }
-
 
 export async function unsubscribe() {
     const subscription = await getPushSubscription();
@@ -78,20 +91,33 @@ export async function unsubscribe() {
         return;
     }
 
-    await deleteSubscription(subscription.endpoint);
-    await subscription.unsubscribe();
-    localStorage.removeItem('isSubscribed');
+    try {
+        await unsubscribePushNotification(subscription.toJSON());
+        try {
+            await deleteSubscription(subscription.endpoint);
+        } catch (dbError) {
+            console.warn('Gagal hapus dari IndexedDB:', dbError);
+        }
 
-    const registration = await navigator.serviceWorker.ready;
-    const worker = registration.active || registration.waiting || registration.installing;
-    worker?.postMessage({
-        type: 'SHOW_NOTIFICATION',
-        title: 'Berhenti Berlangganan',
-        body: 'Anda berhenti berlangganan notifikasi.',
-    });
+        await subscription.unsubscribe();
+        localStorage.removeItem('isSubscribed');
+        stopPeriodicNotifications();
 
-    alert('Anda berhenti berlangganan notifikasi');
-    stopPeriodicNotifications();
+        const registration = await navigator.serviceWorker.ready;
+        const worker = registration.active || registration.waiting || registration.installing;
+        worker?.postMessage({
+            type: 'SHOW_NOTIFICATION',
+            title: 'Berhenti Berlangganan',
+            body: 'Anda berhenti berlangganan notifikasi.',
+        });
+
+        alert('Anda berhenti berlangganan notifikasi');
+        console.log('Unsubscribe berhasil');
+
+    } catch (error) {
+        console.error('Unsubscribe gagal:', error);
+        alert('Gagal berhenti berlangganan: ' + error.message);
+    }
 }
 
 let __pushIntervalId = null;
@@ -115,7 +141,7 @@ export async function startPeriodicNotifications(intervalMs = 60 * 1000) {
                             title: 'Buat Story'
                         }
                     ],
-                    data: { url: '#/add' }
+                    data: { url: `${window.location.origin}/#/add` }
                 });
                 console.log('Periodic message sent to SW');
             } catch (err) {

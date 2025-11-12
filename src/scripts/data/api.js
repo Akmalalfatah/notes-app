@@ -4,10 +4,10 @@ import { CONFIG } from '../config';
 const ENDPOINTS = {
   REGISTER: `${CONFIG.BASE_URL}/register`,
   LOGIN: `${CONFIG.BASE_URL}/login`,
-  
+
   STORY_LIST: `${CONFIG.BASE_URL}/stories`,
   STORE_NEW_STORY: `${CONFIG.BASE_URL}/stories`,
-  STORY_DETAIL: (id) => `${CONFIG.BASE_URL}/stories/${id}`, 
+  STORY_DETAIL: (id) => `${CONFIG.BASE_URL}/stories/${id}`,
 };
 
 export async function getRegistered({ name, email, password }) {
@@ -55,12 +55,12 @@ export async function storeNewStory({ description, photo }) {
   const token = getAccessToken();
 
   if (!token) {
-      throw new Error("Akses ditolak. Anda harus login");
+    throw new Error("Akses ditolak. Anda harus login");
   }
 
   const formData = new FormData();
   formData.append('description', description);
-  formData.append('photo', photo); 
+  formData.append('photo', photo);
 
   const options = {
     method: 'POST',
@@ -78,33 +78,68 @@ export async function storeNewStory({ description, photo }) {
 }
 
 export async function subscribePushNotification(subscription) {
-  if (!subscription) {
-    console.error('Subscription kosong!');
-    return;
+  const token = getAccessToken();
+  
+  if (!token) {
+    throw new Error('Token tidak tersedia. Silakan login kembali.');
   }
+  
+  const { expirationTime, ...subscriptionPayload } = subscription;
+  
+  try {
+    const response = await fetch(`${CONFIG.BASE_URL}/notifications/subscribe`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(subscriptionPayload)
+    });
 
-  const subJson = subscription.toJSON ? subscription.toJSON() : {};
-  const keys = subJson.keys || {};
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`Gagal mendaftarkan notifikasi (${response.status}): ${errText}`);
+    }
 
-  const payload = {
-    endpoint: subJson.endpoint || subscription.endpoint,
-    keys: {
-      p256dh: keys.p256dh || null,
-      auth: keys.auth || null,
-    },
-  };
-
-  console.log('Payload dikirim ke server:', payload);
-
-  return fetch('/api/push/subscribe', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
+    const json = await response.json();
+    console.log('Subscription berhasil dikirim ke server');
+    return json;
+    
+  } catch (error) {
+    console.error('Gagal kirim subscription ke server:', error);
+    throw error;
+  }
 }
 
- 
-export async function unsubscribePushNotification({ endpoint }) {
-  console.log('unsubscribePushNotification called', endpoint);
-  return { ok: true, message: 'no-op' };
+export async function unsubscribePushNotification(subscription) {
+  try {
+    const token = getAccessToken();
+    
+    if (!token) {
+      throw new Error('Token tidak tersedia');
+    }
+    
+    const response = await fetch(`${CONFIG.BASE_URL}/notifications/subscribe`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        endpoint: subscription.endpoint
+      })
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`Gagal berhenti langganan (${response.status}): ${errText}`);
+    }
+
+    console.log('Subscription berhasil dihapus di server.');
+    return await response.json();
+    
+  } catch (error) {
+    console.error('Gagal hapus subscription di server:', error);
+    throw error;
+  }
 }

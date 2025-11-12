@@ -1,8 +1,9 @@
 const DB_NAME = 'bukukami-db';
 const DB_VERSION = 2;
 const STORE_SUBSCRIPTION = 'subscriptions';
-const STORE_STORIES = 'stories';
+const STORE_STORIES = 'stories';        
 const STORE_PENDING = 'pending_stories';
+const STORE_BOOKMARKS = 'bookmarks';      
 
 function openDB() {
   return new Promise((resolve, reject) => {
@@ -25,6 +26,10 @@ function openDB() {
       if (!db.objectStoreNames.contains(STORE_PENDING)) {
         db.createObjectStore(STORE_PENDING, { keyPath: 'tempId', autoIncrement: true });
       }
+
+      if (!db.objectStoreNames.contains(STORE_BOOKMARKS)) {
+        db.createObjectStore(STORE_BOOKMARKS, { keyPath: 'id' });
+      }
     };
   });
 }
@@ -46,7 +51,7 @@ export async function getAllSubscriptions() {
   const store = tx.objectStore(STORE_SUBSCRIPTION);
   return new Promise((resolve, reject) => {
     const request = store.getAll();
-    request.onsuccess = () => resolve(request.result);
+    request.onsuccess = () => resolve(request.result || []);
     request.onerror = () => reject(request.error);
   });
 }
@@ -62,6 +67,80 @@ export async function deleteSubscription(endpoint) {
   });
 }
 
+export async function saveStory(story) {
+  const db = await openDB();
+  const tx = db.transaction(STORE_BOOKMARKS, 'readwrite');
+  const store = tx.objectStore(STORE_BOOKMARKS);
+  store.put(story);
+  await new Promise((resolve, reject) => {
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+  console.log('Story tersimpan di bookmark IndexedDB:', story.id);
+}
+
+export async function getAllStories() {
+  const db = await openDB();
+  const tx = db.transaction(STORE_BOOKMARKS, 'readonly');
+  const store = tx.objectStore(STORE_BOOKMARKS);
+  return new Promise((resolve, reject) => {
+    const request = store.getAll();
+    request.onsuccess = () => resolve(request.result || []);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+export async function getStoryById(id) {
+  const db = await openDB();
+  const tx = db.transaction(STORE_BOOKMARKS, 'readonly');
+  const store = tx.objectStore(STORE_BOOKMARKS);
+  return new Promise((resolve, reject) => {
+    const request = store.get(id);
+    request.onsuccess = () => resolve(request.result || null);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+export async function isStorySaved(id) {
+  const story = await getStoryById(id);
+  return !!story;
+}
+
+export async function deleteStory(id) {
+  const db = await openDB();
+  const tx = db.transaction(STORE_BOOKMARKS, 'readwrite');
+  const store = tx.objectStore(STORE_BOOKMARKS);
+  store.delete(id);
+  await new Promise((resolve, reject) => {
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+  console.log('Story dihapus dari bookmark IndexedDB:', id);
+}
+
+export async function clearBookmarks() {
+  const db = await openDB();
+  const tx = db.transaction(STORE_BOOKMARKS, 'readwrite');
+  const store = tx.objectStore(STORE_BOOKMARKS);
+  store.clear();
+  await new Promise((resolve, reject) => {
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+  console.log('Semua bookmark dihapus dari IndexedDB');
+}
+
+export async function toggleSaveStory(story) {
+  const isSaved = await isStorySaved(story.id);
+  if (isSaved) {
+    await deleteStory(story.id);
+    return false;
+  } else {
+    await saveStory(story);
+    return true;
+  }
+}
+
 export async function saveStories(stories) {
   const db = await openDB();
   const tx = db.transaction(STORE_STORIES, 'readwrite');
@@ -73,28 +152,7 @@ export async function saveStories(stories) {
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });
-}
-
-export async function getAllStories() {
-  const db = await openDB();
-  const tx = db.transaction(STORE_STORIES, 'readonly');
-  const store = tx.objectStore(STORE_STORIES);
-  return new Promise((resolve, reject) => {
-    const request = store.getAll();
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
-}
-
-export async function deleteStory(id) {
-  const db = await openDB();
-  const tx = db.transaction(STORE_STORIES, 'readwrite');
-  const store = tx.objectStore(STORE_STORIES);
-  store.delete(id);
-  await new Promise((resolve, reject) => {
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-  });
+  console.log('Stories tersimpan di cache IndexedDB:', stories.length);
 }
 
 export async function clearStories() {
@@ -106,6 +164,7 @@ export async function clearStories() {
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });
+  console.log('Semua story dihapus dari cache IndexedDB');
 }
 
 export async function savePendingStory(story) {
@@ -125,7 +184,7 @@ export async function getPendingStories() {
   const store = tx.objectStore(STORE_PENDING);
   return new Promise((resolve, reject) => {
     const request = store.getAll();
-    request.onsuccess = () => resolve(request.result);
+    request.onsuccess = () => resolve(request.result || []);
     request.onerror = () => reject(request.error);
   });
 }

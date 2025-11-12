@@ -21,32 +21,31 @@
             "src": "/images/screenshot/BukuKami_001.png",
             "sizes": "2880x1800",
             "type": "image/png",
-            "form-factor": "wide"
+            "form_factor": "wide"
         },
         {
             "src": "/images/screenshot/BukuKami_002.png",
             "sizes": "2880x1800",
-            "type": "image/png"
+            "type": "image/png",
+            "form_factor": "wide"
         },
         {
             "src": "/images/screenshot/BukuKami_003.png",
             "sizes": "2880x1800",
-            "type": "image/png"
+            "type": "image/png",
+            "form_factor": "wide"
         },
         {
             "src": "/images/screenshot/BukuKami_004.png",
             "sizes": "631x1344",
-            "type": "image/png"
+            "type": "image/png",
+            "form_factor": "narrow"
         },
         {
             "src": "/images/screenshot/BukuKami_005.png",
             "sizes": "639x1349",
-            "type": "image/png"
-        },
-        {
-            "src": "/images/screenshot/BukuKami_006.png",
-            "sizes": "646x1354",
-            "type": "image/png"
+            "type": "image/png",
+            "form_factor": "narrow"
         }
     ]
 }

@@ -1,9 +1,9 @@
-import { generateHeroTemplate, generateSkeletonTemplate, generateCardItemTemplate } from "../../templates";
+import { generateHeroTemplate, generateSkeletonTemplate, generateCardItemTemplate } from "../../templates.js";
 import HomePresenter from "./home-presenter";
 import * as StoryAPI from "../../data/api";
 import Map from "../../utils/map";
-import { saveStories, getAllStories } from "../../utils/db-helper";
-import { getAccessToken } from "../../utils/auth"; 
+import { getAccessToken } from "../../utils/auth";
+import { toggleSaveStory, isStorySaved, getAllStories, saveStories } from "../../utils/db-helper";
 
 export default class HomePage {
     #presenter = null;
@@ -27,9 +27,6 @@ export default class HomePage {
                             <div id="card-list-loading-container"></div>
                         </div>
                         <p id="error-message" style="color: red; display: none; text-align: center; margin-top: 20px;"></p>
-                        <div id="load-more-button-container" style="text-align: center; margin-top: 20px;">
-                            <button id="load-more-button" class="btn" style="display: none;">Muat Lebih Banyak</button>
-                        </div>
                     </div>
                 </section>
             </div>
@@ -45,14 +42,16 @@ export default class HomePage {
         this.#map = null;
         await this.#fetchStories();
         this.#setupLoadMoreButton();
+
+        setTimeout(() => this.#initBookmarkButtons(), 300);
     }
 
     async #fetchStories() {
         this.showLoading();
-        
+
         try {
             const token = getAccessToken();
-            
+
             if (!token) {
                 console.warn('No token, using cache');
                 const cachedStories = await getAllStories();
@@ -70,10 +69,10 @@ export default class HomePage {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            
+
             const result = await response.json();
-            console.log('API Response:', result); 
-            
+            console.log('API Response:', result);
+
             const stories = result.listStory || [];
             await saveStories(stories);
             this.displayStories(stories);
@@ -84,7 +83,7 @@ export default class HomePage {
             const cachedStories = await getAllStories();
             this.displayStories(cachedStories);
             this.hideLoading();
-            
+
             if (cachedStories.length === 0) {
                 this.displayError('Tidak dapat memuat cerita. Periksa koneksi internet Anda.');
             }
@@ -141,13 +140,33 @@ export default class HomePage {
         }
     }
 
-    showLoadMoreButton(show, loading = false) {
-        const button = document.getElementById('load-more-button');
-        if (!button) return;
+    async #initBookmarkButtons() {
+        const buttons = document.querySelectorAll('.bookmark-button');
+        if (!buttons.length) return;
 
-        button.style.display = show ? 'block' : 'none';
-        button.disabled = loading;
-        button.textContent = loading ? 'Memuat' : 'Muat Lebih Banyak';
+        for (const button of buttons) {
+            const id = button.dataset.id;
+            const saved = await isStorySaved(id);
+
+            // Jika sudah tersimpan sebelumnya → langsung hijau
+            if (saved) button.classList.add('saved');
+
+            button.addEventListener('click', async () => {
+                const story = {
+                    id,
+                    name: button.closest('.card-item').querySelector('.card-item__title').textContent,
+                    description: button.closest('.card-item').querySelector('.card-item__description').textContent,
+                    photoUrl: button.closest('.card-item').querySelector('.card-item__image').src
+                };
+
+                const isSavedNow = await toggleSaveStory(story);
+                if (isSavedNow) {
+                    button.classList.add('saved');
+                } else {
+                    button.classList.remove('saved');
+                }
+            });
+        }
     }
 
     showLoading() {
