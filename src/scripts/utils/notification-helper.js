@@ -52,28 +52,22 @@ export async function subscribe() {
 
         const subscriptionJSON = subscription.toJSON();
 
-        // Save to IndexedDB
         try {
             await saveSubscription(subscriptionJSON);
         } catch (dbError) {
             console.warn('Gagal save ke IndexedDB:', dbError);
         }
 
-        // Send to server
         await subscribePushNotification(subscriptionJSON);
-
-        // Save to localStorage
         localStorage.setItem('isSubscribed', 'true');
-
-        // Send notification to Service Worker
         const worker = registration.active || registration.waiting || registration.installing;
         worker?.postMessage({
             type: 'SHOW_NOTIFICATION',
-            title: 'Notifikasi diaktifkan!',
-            body: 'Anda saat ini mulai berlangganan notifikasi.',
+            title: 'Notifikasi diaktifkan',
+            body: 'Success to subscribe web push notification.',
         });
 
-        alert('Anda saat ini mulai berlangganan notifikasi');
+        alert('Success to subscribe web push notification.');
         startPeriodicNotifications(60 * 1000);
         
         console.log('Subscribe berhasil');
@@ -108,10 +102,10 @@ export async function unsubscribe() {
         worker?.postMessage({
             type: 'SHOW_NOTIFICATION',
             title: 'Berhenti Berlangganan',
-            body: 'Anda berhenti berlangganan notifikasi.',
+            body: 'Success to unsubscribe web push notification.',
         });
 
-        alert('Anda berhenti berlangganan notifikasi');
+        alert('Success to unsubscribe web push notification.');
         console.log('Unsubscribe berhasil');
 
     } catch (error) {

@@ -147,8 +147,7 @@ export default class HomePage {
         for (const button of buttons) {
             const id = button.dataset.id;
             const saved = await isStorySaved(id);
-
-            // Jika sudah tersimpan sebelumnya → langsung hijau
+            
             if (saved) button.classList.add('saved');
 
             button.addEventListener('click', async () => {
