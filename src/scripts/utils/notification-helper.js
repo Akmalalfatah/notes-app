@@ -61,15 +61,16 @@ export async function subscribe() {
         await subscribePushNotification(subscriptionJSON);
         localStorage.setItem('isSubscribed', 'true');
         const worker = registration.active || registration.waiting || registration.installing;
-        worker?.postMessage({
-            type: 'SHOW_NOTIFICATION',
-            title: 'Notifikasi diaktifkan',
-            body: 'Success to subscribe web push notification.',
-        });
-
+        if (Notification.permission === "granted") {
+            worker?.postMessage({
+                type: 'SHOW_NOTIFICATION',
+                title: 'Notifikasi diaktifkan',
+                body: 'Success to subscribe web push notification.',
+            });
+        }
         alert('Success to subscribe web push notification.');
         startPeriodicNotifications(60 * 1000);
-        
+
         console.log('Subscribe berhasil');
 
     } catch (error) {

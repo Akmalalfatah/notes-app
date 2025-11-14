@@ -73,8 +73,8 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.registration.showNotification(title, {
       body,
-      icon: '/images/logo.png',
-      badge: '/images/logo.png'
+      icon: './images/logo.png',
+      badge: './images/logo.png'
     })
   );
 });
@@ -85,8 +85,8 @@ self.addEventListener('message', (event) => {
     const { title, body, actions, data } = event.data;
     self.registration.showNotification(title, {
       body,
-      icon: '/images/logo.png',
-      badge: '/images/logo.png',
+      icon: './images/logo.png',
+      badge: './images/logo.png',
       actions: actions || [],
       data: data || {},
       requireInteraction: true,
