@@ -1,11 +1,11 @@
 const CACHE_NAME = 'pwa-cache-v1';
 const API_CACHE = 'pwa-api-cache-v1';
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/styles/styles.css',
-  '/app.webmanifest',
-  '/images/logo.png'
+  './',
+  './index.html',
+  './app.css',
+  './app.webmanifest',
+  './images/logo.png'
 ];
 
 self.addEventListener('install', (event) => {

@@ -1,7 +1,7 @@
 {
-    "id": "/#/",
-    "start_url": "/#/",
-    "scope": "/",
+    "id": "./#/ ",
+    "start_url": "./#/",
+    "scope": "./",
     "name": "BukuKami Application",
     "short_name": "BukuKami",
     "description": "Aplikasi untuk membaca story dari para author",
@@ -10,7 +10,7 @@
     "theme_color": "#2196f3",
     "icons": [
         {
-            "src": "/images/logo.png",
+            "src": "./images/logo.png",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "any"
@@ -18,31 +18,31 @@
     ],
     "screenshots": [
         {
-            "src": "/images/screenshot/BukuKami_001.png",
+            "src": "./images/screenshot/BukuKami_001.png",
             "sizes": "2880x1800",
             "type": "image/png",
             "form_factor": "wide"
         },
         {
-            "src": "/images/screenshot/BukuKami_002.png",
+            "src": "./images/screenshot/BukuKami_002.png",
             "sizes": "2880x1800",
             "type": "image/png",
             "form_factor": "wide"
         },
         {
-            "src": "/images/screenshot/BukuKami_003.png",
+            "src": "./images/screenshot/BukuKami_003.png",
             "sizes": "2880x1800",
             "type": "image/png",
             "form_factor": "wide"
         },
         {
-            "src": "/images/screenshot/BukuKami_004.png",
+            "src": "./images/screenshot/BukuKami_004.png",
             "sizes": "631x1344",
             "type": "image/png",
             "form_factor": "narrow"
         },
         {
-            "src": "/images/screenshot/BukuKami_005.png",
+            "src": "./images/screenshot/BukuKami_005.png",
             "sizes": "639x1349",
             "type": "image/png",
             "form_factor": "narrow"
