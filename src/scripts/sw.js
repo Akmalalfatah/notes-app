@@ -38,6 +38,9 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const requestUrl = new URL(event.request.url);
   if (requestUrl.origin.includes('story-api.dicoding.dev')) {
+    
+    if (event.request.method !== 'GET') return;
+
     event.respondWith(
       caches.open(API_CACHE).then(async (cache) => {
         try {
